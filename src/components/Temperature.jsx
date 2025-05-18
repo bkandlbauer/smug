@@ -17,7 +17,7 @@ const Temperature = ({ value }) => {
 
       
       <div className='text-5xl font-bold text-white'>
-        {value}°
+        {value}° C
       </div>
       
     </div>
