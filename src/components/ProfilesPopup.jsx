@@ -1,52 +1,43 @@
 import { useEffect, useState } from "react";
 import CalibrationPopup from "./CalibrationPopup";
-
-const LOCAL_STORAGE_KEY = "mugs";
+import DataService from "../DataService.jsx";
 
 const ProfilesPopup = ({ isOpen, onClose }) => {
   const [profiles, setProfiles] = useState([]);
   const [newProfile, setNewProfile] = useState("");
-  const [calibratingProfileId, setCalibratingProfileId] = useState(null);
+  const [calibrate, setCalibrate] = useState(false);
 
   useEffect(() => {
     if (!isOpen) {
       setNewProfile("");
       return;
     }
-    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (stored) {
-      setProfiles(JSON.parse(stored));
-    }
+    setProfiles(DataService.profiles);
   }, [isOpen]);
 
-  const handleSelectProfile = (profile) => {
-    alert(`Selected profile: ${profile.name}`);
+  const calibrateProfile = (name) => {
+    DataService.selectProfile(name);
+    setCalibrate(true);
+  };
+
+  const handleSelectProfile = (name) => {
+    DataService.selectProfile(name);
     onClose();
   };
 
   const handleAddProfile = () => {
-    if (!newProfile.trim()) return;
-    const newEntry = { id: Date.now(), name: newProfile.trim(), mugData: {} };
-    const updatedProfiles = [...profiles, newEntry];
-    setProfiles(updatedProfiles);
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedProfiles));
-    setNewProfile("");
-    setCalibratingProfileId(newEntry.id);
+    const name = newProfile.trim();
+    if (name) {
+      DataService.createProfile(name);
+      setProfiles(DataService.profiles);
+      setNewProfile("");
+      setCalibrate(true);
+    }
   };
 
-  const handleCalibrationFinish = (mugData) => {
-    const updatedProfiles = profiles.map(p =>
-      p.id === calibratingProfileId ? { ...p, mugData } : p
-    );
-    setProfiles(updatedProfiles);
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedProfiles));
-    setCalibratingProfileId(null);
-  };
-
-  const handleDelete = (id) => {
-    const updatedProfiles = profiles.filter(p => p.id !== id);
-    setProfiles(updatedProfiles);
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedProfiles));
+  const handleDelete = (name) => {
+    DataService.deleteProfile(name);
+    setProfiles(DataService.profiles);
   };
 
   if (!isOpen) return null;
@@ -61,16 +52,15 @@ const ProfilesPopup = ({ isOpen, onClose }) => {
           </div>
           <div className="space-y-2">
             {profiles.map((profile) => (
-              <div key={profile.id} className="border rounded p-2 flex justify-between items-center">
-                <button
-                  className="text-left flex-1"
-                  onClick={() => handleSelectProfile(profile)}
-                >
-                  {profile.name} {profile.mugData?.liquid ? `(${profile.mugData.liquid }ml)` : "(Uncalibrated)"}
+              <div key={profile.name} className={`border rounded p-2 flex justify-between items-center ${DataService.profile.name === profile.name ? "bg-blue-100 bg-opacity-20" : ""}`}>
+                <button className="text-left flex-1" onClick={() => handleSelectProfile(profile.name)}>
+                <p className={`${DataService.profile.name === profile.name ? "font-bold" : ""}`}>
+                  {profile.name} {profile.data?.ml ? `(${profile.data.ml }ml)` : "(Uncalibrated)"}
+                </p>
                 </button>
                 <div className="flex space-x-1">
-                  <button onClick={() => setCalibratingProfileId(profile.id)} className="text-blue-500 text-sm mr-2">Recalibrate</button>
-                  <button onClick={() => handleDelete(profile.id)} className="text-red-500 text-sm">Delete</button>
+                  <button onClick={() => calibrateProfile(profile.name)} className="text-blue-500 text-sm mr-2">Recalibrate</button>
+                  <button onClick={() => handleDelete(profile.name)} className="text-red-500 text-sm">Delete</button>
                 </div>
               </div>
             ))}
@@ -92,11 +82,7 @@ const ProfilesPopup = ({ isOpen, onClose }) => {
           </div>
         </div>
       </div>
-      <CalibrationPopup
-        isOpen={calibratingProfileId !== null}
-        onClose={() => setCalibratingProfileId(null)}
-        onFinish={handleCalibrationFinish}
-      />
+      <CalibrationPopup isOpen={calibrate} onClose={() => setCalibrate(false)}/>
     </>
   );
 };
