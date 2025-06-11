@@ -23,6 +23,7 @@ class DataService {
     this.fillPercentage = 0;
     this.temperature = 0;
     this.calibrationStatus = DONE;
+    this.emitter = new EventTarget();
   }
 
   async connect() {
@@ -31,6 +32,7 @@ class DataService {
       const server = await device.gatt.connect();
       const service = await server.getPrimaryService(SERVICE_UUID);
       this.connected = true;
+      this.emitter.dispatchEvent(new CustomEvent("connection", {detail: this.connected}));
 
       const fillLevel = await service.getCharacteristic(FILL_UUID);
       await fillLevel.startNotifications();
@@ -50,14 +52,16 @@ class DataService {
 
   handleTemperatureValue(temperature) {
     this.temperature = temperature;
+    this.emitter.dispatchEvent(new CustomEvent("temperature", {detail: this.temperature}));
   }
 
   handleFillValue(distance) {
     if (this.profile) {
       if (this.calibrationStatus == DONE) {
         const ratio = (this.profile.data.full - distance) / (this.profile.data.full - this.profile.data.empty);
-        this.fillLevel = this.profile.data.ml * ratio;
-        this.fillPercentage = 100 * ratio;
+        this.fillLevel = Math.round(this.profile.data.ml * ratio * 100) / 100;
+        this.fillPercentage = Math.min(Math.max(Math.round(100 * ratio), 0), 100);
+        this.emitter.dispatchEvent(new CustomEvent("fill", {detail: [this.fillPercentage, this.fillLevel]}));
       } else if (this.calibrationStatus == EMPTY) {
         this.profile.data.empty = distance;
       } else if (this.calibrationStatus == FULL) {
@@ -89,6 +93,7 @@ class DataService {
     let profile = {name: name, data: {full: 0, empty: 0, ml: 0}};
     this.profiles.push(profile);
     this.profile = profile;
+    this.emitter.dispatchEvent(new CustomEvent("select-profile", {detail: this.profile.name}));
     this.saveData();
   }
 
@@ -96,13 +101,19 @@ class DataService {
     this.profiles = this.profiles.filter(x => x.name != name);
     if (this.profile && this.profile.name == name) {
       this.profile = null;
+      this.emitter.dispatchEvent(new CustomEvent("select-profile", {detail: "-"}));
     }
     this.saveData();
   }
 
   selectProfile(name) {
     this.profile = this.profiles.find(x => x.name == name);
+    this.emitter.dispatchEvent(new CustomEvent("select-profile", {detail: this.profile ? this.profile.name : "-"}));
     this.saveData();
+  }
+
+  onSignal(signal, callback) {
+    this.emitter.addEventListener(signal, callback);
   }
 }
 
