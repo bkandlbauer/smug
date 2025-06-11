@@ -13,49 +13,61 @@ function App() {
   const [temperature, setTemperature] = useState(61);
   const [connection, setConnection] = useState("disconnected");
 
-  const SERVICE_UUID = '12345678-1234-5678-1234-56789abcdef0';
-  const FILL_UUID = '12345678-1234-5678-1234-56789abcdef1';
-  const FILLED_UUID = '12345678-1234-5678-1234-56789abcdef2';
-  const LAST_FILLED_UUID = '12345678-1234-5678-1234-56789abcdef3';
-  const TEMPERATURE_UUID = '12345678-1234-5678-1234-56789abcdef4';
+const SERVICE_UUID = '12345678-1234-5678-1234-56789abcdef0';
+const FILL_UUID = '12345678-1234-5678-1234-56789abcdef1';
+const TEMPERATURE_UUID = '12345678-1234-5678-1234-56789abcdef2';
 
-  const connectBLE = async () => {
-    try {
-      const device = await navigator.bluetooth.requestDevice({
-        filters: [{ name: 'smugConnector' }],
-        optionalServices: [SERVICE_UUID],
-      });
+//const FILLED_UUID = '12345678-1234-5678-1234-56789abcdef3';
+//const LAST_FILLED_UUID = '12345678-1234-5678-1234-56789abcdef4';
+
+
+const connectBLE = async () => {
+  try {
+    const device = await navigator.bluetooth.requestDevice({
+      //filters: [{ name: 'smugConnector' }],
+      acceptAllDevices: true,
+      optionalServices: [SERVICE_UUID],
+    });
 
       const server = await device.gatt.connect();
       const service = await server.getPrimaryService(SERVICE_UUID);
 
-      const fillLevel = await service.getCharacteristic(FILL_UUID);
-      await fillLevel.startNotifications();
-      fillLevel.addEventListener('characteristicvaluechanged', (event) => {
-        const fillLevelValue = event.target.value.getUint8(0); // here match Arduino write type that is defined in the arduino code.
-        setFill(fillLevelValue);
-      });
+    setConnection("connected");
+    console.log("Connected.");
 
-      const isFilled = await service.getCharacteristic(FILLED_UUID);
-      await isFilled.startNotifications();
-      isFilled.addEventListener('characteristicvaluechanged', (event) => {
-        const isFilledValue = event.target.value.getUint8(0); // here match Arduino write type that is defined in the arduino code.
-        setFilled(isFilledValue);
-      });
+    const fillLevel = await service.getCharacteristic(FILL_UUID);
+    await fillLevel.startNotifications();
+    fillLevel.addEventListener('characteristicvaluechanged', (event) => {
+      const fillLevelValue = event.target.value.getUint16(0, true); // here match Arduino write type that is defined in the arduino code.
+      console.log(fillLevelValue);
+      setFill(fillLevelValue);
+    });
 
-      const lastFill = await service.getCharacteristic(LAST_FILLED_UUID);
-      await lastFill.startNotifications();
-      lastFill.addEventListener('characteristicvaluechanged', (event) => {
-        const lastFillValue = event.target.value.getUint8(0); // here match Arduino write type that is defined in the arduino code.
-        setLast(lastFillValue);
-      });
+    const temperatureLevel = await service.getCharacteristic(TEMPERATURE_UUID);
+    await temperatureLevel.startNotifications();
+    temperatureLevel.addEventListener('characteristicvaluechanged', (event) => {
+      const temperatureLevelValue = event.target.value.getUint16(0, true); // here match Arduino write type that is defined in the arduino code.
+      console.log(temperatureLevelValue);
+      setTemperature(temperatureLevelValue);
+    });
 
-      const temperatureLevel = await service.getCharacteristic(TEMPERATURE_UUID);
-      await temperatureLevel.startNotifications();
-      temperatureLevel.addEventListener('characteristicvaluechanged', (event) => {
-        const temperatureLevelValue = event.target.value.getUint8(0); // here match Arduino write type that is defined in the arduino code.
-        setTemperature(temperatureLevelValue);
-      });
+    // const isFilled = await service.getCharacteristic(FILLED_UUID);
+    // await isFilled.startNotifications();
+    //  isFilled.addEventListener('characteristicvaluechanged', (event) => {
+    //   const isFilledValue = event.target.value.getUint32(0); // here match Arduino write type that is defined in the arduino code.
+    //   setFilled(isFilledValue);
+    // });
+
+    // const lastFill = await service.getCharacteristic(LAST_FILLED_UUID);
+    // await lastFill.startNotifications();
+    //  lastFill.addEventListener('characteristicvaluechanged', (event) => {
+    //   const lastFillValue = event.target.value.getUint32(0); // here match Arduino write type that is defined in the arduino code.
+    //   setLast(lastFillValue);
+    // });
+  } catch (error) {
+    console.error('Error connecting:', error);
+  }
+};
 
       setConnection("connected");
       console.log("Connected.");
