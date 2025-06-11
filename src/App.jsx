@@ -4,6 +4,7 @@ import FillLevel from './components/FillLevel.jsx';
 import LastRefill from './components/LastRefill.jsx';
 import Temperature from './components/Temperature.jsx';
 import CalibrationPopup from './components/CalibrationPopup.jsx';
+import ProfilesPopup from './components/ProfilesPopup.jsx';
 
 function App() {
 
@@ -16,9 +17,6 @@ const [connection, setConnection] = useState("disconnected");
 const SERVICE_UUID = '12345678-1234-5678-1234-56789abcdef0';
 const FILL_UUID = '12345678-1234-5678-1234-56789abcdef1';
 const TEMPERATURE_UUID = '12345678-1234-5678-1234-56789abcdef2';
-
-//const FILLED_UUID = '12345678-1234-5678-1234-56789abcdef3';
-//const LAST_FILLED_UUID = '12345678-1234-5678-1234-56789abcdef4';
 
 const connectBLE = async () => {
   try {
@@ -49,27 +47,14 @@ const connectBLE = async () => {
       console.log(temperatureLevelValue);
       setTemperature(temperatureLevelValue);
     });
-
-    // const isFilled = await service.getCharacteristic(FILLED_UUID);
-    // await isFilled.startNotifications();
-    //  isFilled.addEventListener('characteristicvaluechanged', (event) => {
-    //   const isFilledValue = event.target.value.getUint32(0); // here match Arduino write type that is defined in the arduino code.
-    //   setFilled(isFilledValue);
-    // });
-
-    // const lastFill = await service.getCharacteristic(LAST_FILLED_UUID);
-    // await lastFill.startNotifications();
-    //  lastFill.addEventListener('characteristicvaluechanged', (event) => {
-    //   const lastFillValue = event.target.value.getUint32(0); // here match Arduino write type that is defined in the arduino code.
-    //   setLast(lastFillValue);
-    // });
   } catch (error) {
     console.error('Error connecting:', error);
   }
 };
 
   
-const [showPopup, setShowPopup] = useState(false);
+const [showCalibration, setShowCalibration] = useState(false);
+const [showProfiles, setShowProfiles] = useState(false);
 
   return (
       <div className="mt-15">
@@ -80,13 +65,14 @@ const [showPopup, setShowPopup] = useState(false);
         <LastRefill value={last}/>
       </div>
       <Temperature value={temperature}/>
-      <CalibrationPopup isOpen={showPopup} onClose={() => setShowPopup(false)} />
+      <CalibrationPopup isOpen={showCalibration} onClose={() => setShowCalibration(false)} />
+      <ProfilesPopup isOpen={showProfiles} onClose={() => setShowProfiles(false)} />
       <div className='flex flex-row gap-5 mb-10'>
         <button onClick={connectBLE} className="cursor-pointer mt-30  px-15 py-3 bg-black text-white rounded flex items-start hover:bg-white hover:text-black hover:border-1 border-1 duration-100 ease-in-out">
           Connect
         </button>
-        <button onClick={() => setShowPopup(true)} className="cursor-pointer mt-30  px-15 py-3 bg-black text-white rounded flex items-start hover:bg-white hover:text-black hover:border-1 border-1 duration-100 ease-in-out">
-          Calibrate
+        <button onClick={() => setShowProfiles(true)} className="cursor-pointer mt-30  px-15 py-3 bg-black text-white rounded flex items-start hover:bg-white hover:text-black hover:border-1 border-1 duration-100 ease-in-out">
+          Mugs
         </button>
       </div>
     </div>
