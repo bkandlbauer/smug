@@ -7,11 +7,11 @@ import CalibrationPopup from './components/CalibrationPopup.jsx';
 
 function App() {
 
-  const [filled, setFilled] = useState(false);
-  const [fill, setFill] = useState(71);
-  const [last, setLast] = useState(12);
-  const [temperature, setTemperature] = useState(61);
-  const [connection, setConnection] = useState("disconnected");
+const [filled, setFilled] = useState(false);
+const [fill, setFill] = useState(71);
+const [last, setLast] = useState(12);
+const [temperature, setTemperature] = useState(61);
+const [connection, setConnection] = useState("disconnected");
 
 const SERVICE_UUID = '12345678-1234-5678-1234-56789abcdef0';
 const FILL_UUID = '12345678-1234-5678-1234-56789abcdef1';
@@ -19,7 +19,6 @@ const TEMPERATURE_UUID = '12345678-1234-5678-1234-56789abcdef2';
 
 //const FILLED_UUID = '12345678-1234-5678-1234-56789abcdef3';
 //const LAST_FILLED_UUID = '12345678-1234-5678-1234-56789abcdef4';
-
 
 const connectBLE = async () => {
   try {
@@ -69,14 +68,8 @@ const connectBLE = async () => {
   }
 };
 
-      setConnection("connected");
-      console.log("Connected.");
-    } catch (error) {
-      console.error('Error connecting:', error);
-    }
-  };
   
-  const [showPopup, setShowPopup] = useState(false);
+const [showPopup, setShowPopup] = useState(false);
 
   return (
       <div className="mt-15">
