@@ -13,6 +13,10 @@ const MEASUREMENTS = 4;
 
 class DataService {
   constructor() {
+    this.beepsis = 0;
+    this.fillSignal = false;
+    this.audio = new Audio('https://media.geeksforgeeks.org/wp-content/uploads/20190531135120/beep.mp3');
+    this.horn = new Audio('/horn.mp3');
     this.connected = false;
     this.profiles = JSON.parse(localStorage.getItem("profiles"));
     if (this.profiles) {
@@ -109,12 +113,25 @@ class DataService {
       return;
     }
 
+    if (distance < 20 && !this.fillSignal) {
+      this.beepsis++;
+      console.warn('beep');
+
+      if (this.beepsis >= 4) {
+        this.horn?.play(); // TODO: Airhorn
+        this.fillSignal = true;
+      } else {
+        this.audio?.play();
+      }
+    } else {
+      this.beepsis = 0;
+    }
+
     const avgResult = this.filterFillValue(distance);
     if (avgResult === false) {
       return;
     }
 
-    distance = avgResult;
     if (Math.abs(this.distance - distance) < THRESHOLD_FILL) {
       return;
     }
@@ -135,6 +152,7 @@ class DataService {
       this.history.refills = this.history.refills + 1;
     } else {
       this.history.sum = this.history.sum + change;
+      this.fillSignal = false;
     }
     this.distance = distance;
     this.emitter.dispatchEvent(new CustomEvent("fill", {detail: [this.fillPercentage, this.fillLevel, this.profile ? this.profile.data.ml : 0, this.lastRefill]}));
