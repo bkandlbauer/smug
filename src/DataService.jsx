@@ -6,7 +6,7 @@ const DONE = 0;
 const EMPTY = 1;
 const FULL = 2;
 
-const CALIBRATION_TIME = 1000;
+const CALIBRATION_TIME = 3000;
 
 class DataService {
   constructor() {
@@ -23,6 +23,7 @@ class DataService {
     this.fillPercentage = 0;
     this.temperature = 0;
     this.calibrationStatus = DONE;
+    this.calibrationValues = [];
     this.emitter = new EventTarget();
   }
 
@@ -62,10 +63,8 @@ class DataService {
         this.fillLevel = Math.round(this.profile.data.ml * ratio * 100) / 100;
         this.fillPercentage = Math.min(Math.max(Math.round(100 * ratio), 0), 100);
         this.emitter.dispatchEvent(new CustomEvent("fill", {detail: [this.fillPercentage, this.fillLevel]}));
-      } else if (this.calibrationStatus == EMPTY) {
-        this.profile.data.empty = distance;
-      } else if (this.calibrationStatus == FULL) {
-        this.profile.data.full = distance;
+      } else {
+        this.calibrationValues(distance);
       }
     }
   }
@@ -76,7 +75,15 @@ class DataService {
 
   async calibrate(full) {
     this.calibrationStatus = full ? FULL : EMPTY;
+    this.calibrationValues = [];
     await new Promise(resolve => setTimeout(resolve, CALIBRATION_TIME));
+    let value = median(filterOutliers(this.calibrationValues));
+    this.calibrationValues = [];
+    if (this.calibrationStatus == FULL) {
+      this.profile.data.full = value;
+    } else if (this.calibrationStatus == EMPTY) {
+      this.profile.data.empty = value;
+    }
   }
 
   async finishCalibration() {
@@ -115,6 +122,26 @@ class DataService {
   onSignal(signal, callback) {
     this.emitter.addEventListener(signal, callback);
   }
+}
+
+function median(array) {
+  const mid = Math.floor(array.length / 2);
+  return array.length % 2 !== 0 ? array[mid] : (array[mid - 1] + array[mid]) / 2;
+}
+
+function filterOutliers(array) {
+  if (array.length < 4) return array;
+
+  let sorted = [...array].sort((a, b) => a - b);
+
+  const q1 = median(sorted.slice(0, Math.floor(sorted.length / 2)));
+  const q3 = median(sorted.slice(Math.ceil(sorted.length / 2)));
+  const iqr = q3 - q1;
+
+  const lowerBound = q1 - 1.5 * iqr;
+  const upperBound = q3 + 1.5 * iqr;
+
+  return array.filter(x => x >= lowerBound && x <= upperBound);
 }
 
 const instance = new DataService();
