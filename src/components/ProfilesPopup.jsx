@@ -52,9 +52,9 @@ const ProfilesPopup = ({ isOpen, onClose }) => {
           </div>
           <div className="space-y-2 mt-5">
             {profiles.map((profile) => (
-              <div key={profile.name} className={`border rounded p-2 border-gray-300 flex justify-between items-center ${DataService.profile.name === profile.name ? "border border-black bg-gradient-to-bl from-gray-200 to-gray-300 text-black" : ""} transform transition-transform duration-200 hover:scale-105`}>
+              <div key={profile.name} className={`border rounded p-2 border-gray-300 flex justify-between items-center ${DataService.profile?.name === profile.name ? "border border-black bg-gradient-to-bl from-gray-200 to-gray-300 text-black" : ""} transform transition-transform duration-200 hover:scale-105`}>
                 <button className="text-left flex-1" onClick={() => handleSelectProfile(profile.name)}>
-                <p className={`${DataService.profile.name === profile.name ? "font-bold" : ""}`}>
+                <p className={`${DataService.profile?.name === profile.name ? "font-bold" : ""}`}>
                   {profile.name} {profile.data?.ml ? `(${profile.data.ml }ml)` : "(Uncalibrated)"}
                 </p>
                 </button>

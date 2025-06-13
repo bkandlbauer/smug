@@ -9,7 +9,7 @@ const FULL = 2;
 const CALIBRATION_TIME = 3000;
 const THRESHOLD_FILL = 5;
 
-const MEASUREMENTS = 4;
+const MEASUREMENTS = 6;
 
 class DataService {
   constructor() {
@@ -132,22 +132,26 @@ class DataService {
       return;
     }
 
-    if (Math.abs(this.distance - distance) < THRESHOLD_FILL) {
+    const changeMm = this.distance - distance; // If positiv => refill
+    const refill = changeMm > 0;
+
+    if (Math.abs(changeMm) < THRESHOLD_FILL) {
       return;
     }
 
-    const ratio = clamp((this.profile.data.empty - this.distance) / (this.profile.data.empty - this.profile.data.full), 0, 1);
-    this.fillLevel = this.profile.data.ml * ratio;
-    this.fillPercentage = 100 * ratio;
-    const change = this.profile.data.ml * Math.round(Math.abs(this.distance - distance) / (this.profile.data.empty - this.profile.data.full));
+
+    const ratio = clamp((this.profile.data.empty - distance) / (this.profile.data.empty - this.profile.data.full), 0, 2);
+    this.fillLevel = Math.round(this.profile.data.ml * ratio);
+    this.fillPercentage = Math.round(100 * ratio);
+    const change = Math.round(this.profile.data.ml * Math.abs(changeMm) / (this.profile.data.empty - this.profile.data.full));
     const timestamp = Date.now();
     const day = new Date(timestamp).toISOString().split('T')[0];
     if (day != this.day) {
       this.day = day;
       this.history = {sum: 0, refills: 0, data: []};
     }
-    this.history.data.push({timestamp: timestamp, change: change, refill: distance < this.distance});
-    if (distance < this.distance) {
+    this.history.data.push({timestamp: timestamp, change: change, refill });
+    if (refill) {
       this.lastRefill = timestamp;
       this.history.refills = this.history.refills + 1;
     } else {
@@ -182,6 +186,10 @@ class DataService {
   async finishCalibration() {
     this.calibrationStatus = DONE;
     this.saveData();
+    this.fillPercentage = 100;
+    this.fillLevel = this.profile.data.ml;
+    this.lastRefill = Date.now();
+    this.emitter.dispatchEvent(new CustomEvent("fill", {detail: [this.fillPercentage, this.fillLevel, this.profile ? this.profile.data.ml : 0, this.lastRefill]}));
   }
 
   saveData() {
@@ -225,8 +233,9 @@ class DataService {
     for (let i = 6; i >= 0; i--) {
       let day = new Date();
       day.setDate(date.getDate() - i);
-      const history = JSON.parse(localStorage.getItem("history:" + day));
-      data.push({date: day.toISOString().split('T')[0], amount: history ? history.sum : 0});
+      const dateString = day.toISOString().split('T')[0];
+      const history = JSON.parse(localStorage.getItem("history:" + dateString));
+      data.push({date: dateString, amount: history ? Math.round(history.sum / 10) / 100 : 0});
     }
 
     return data;

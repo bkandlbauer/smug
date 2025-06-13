@@ -13,7 +13,7 @@ function App() {
   const [fillMax, setFillMax] = useState(DataService.profile ? DataService.profile.data.ml : 0);
   const [history, setHistory] = useState(DataService.getHistoryData());
   const [last, setLast] = useState(getTimeSince(DataService.lastRefill));
-  const [temperature, setTemperature] = useState(0);
+  const [temperature, setTemperature] = useState(DataService.temperature);
   const [connection, setConnection] = useState("disconnected");
   const [profile, setProfile] = useState(DataService.profile ? DataService.profile.name : "no mug selected");
 
