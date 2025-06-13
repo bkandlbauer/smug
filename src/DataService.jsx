@@ -73,6 +73,7 @@ class DataService {
   }
 
   handleTemperatureValue(temperature) {
+    if (this.temperature == temperature) {return;}
     this.temperature = temperature;
     this.emitter.dispatchEvent(new CustomEvent("temperature", {detail: this.temperature}));
     this.saveData();
