@@ -136,10 +136,10 @@ class DataService {
       return;
     }
 
-    const ratio = (this.profile.data.empty - distance) / (this.profile.data.empty - this.profile.data.full);
-    this.fillLevel = Math.round(this.profile.data.ml * ratio);
-    this.fillPercentage = clamp(Math.round(100 * ratio), 0, 100);
-    const change = this.profile.data.ml * Math.round(Math.abs(this.distance - distance) / (this.profile.data.full - this.profile.data.empty));
+    const ratio = clamp((this.profile.data.empty - this.distance) / (this.profile.data.empty - this.profile.data.full), 0, 1);
+    this.fillLevel = this.profile.data.ml * ratio;
+    this.fillPercentage = 100 * ratio;
+    const change = this.profile.data.ml * Math.round(Math.abs(this.distance - distance) / (this.profile.data.empty - this.profile.data.full));
     const timestamp = Date.now();
     const day = new Date(timestamp).toISOString().split('T')[0];
     if (day != this.day) {
