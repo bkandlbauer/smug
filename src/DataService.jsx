@@ -7,6 +7,8 @@ const EMPTY = 1;
 const FULL = 2;
 
 const CALIBRATION_TIME = 3000;
+const THRESHOLD_FILL = 5;
+const THRESHOLD_DRINK = 5;
 
 class DataService {
   constructor() {
@@ -21,9 +23,26 @@ class DataService {
     }
     this.fillLevel = 0;
     this.fillPercentage = 0;
-    this.temperature = 0;
     this.calibrationStatus = DONE;
     this.calibrationValues = [];
+    this.day = new Date(Date.now()).toISOString().split('T')[0];
+    const state = JSON.parse(localStorage.getItem("state"));
+    if (state) {
+      this.lastRefill = state.lastRefill;
+      this.distance = state.distance;
+      this.temperature = state.temperature;
+      if (this.profile) {
+        const ratio = (this.profile.data.empty - this.distance) / (this.profile.data.empty - this.profile.data.full);
+        this.fillLevel = round(this.profile.data.ml * ratio);
+        this.fillPercentage = clamp(round(100 * ratio), 0, 100);
+      }
+    } else {
+      this.lastRefill = Date.now();
+      this.distance = this.profile ? this.profile.data.empty : 0;
+      this.temperature = 0;
+    }
+    const history = JSON.parse(localStorage.getItem("history:" + this.day));
+    this.history = history ? history : {sum: 0, refills: 0, data: []};
     this.emitter = new EventTarget();
   }
 
@@ -54,17 +73,36 @@ class DataService {
   handleTemperatureValue(temperature) {
     this.temperature = temperature;
     this.emitter.dispatchEvent(new CustomEvent("temperature", {detail: this.temperature}));
+    this.saveData();
   }
 
   handleFillValue(distance) {
     if (this.profile) {
       if (this.calibrationStatus == DONE) {
-        const ratio = (this.profile.data.full - distance) / (this.profile.data.full - this.profile.data.empty);
-        this.fillLevel = Math.round(this.profile.data.ml * ratio * 100) / 100;
-        this.fillPercentage = Math.min(Math.max(Math.round(100 * ratio), 0), 100);
-        this.emitter.dispatchEvent(new CustomEvent("fill", {detail: [this.fillPercentage, this.fillLevel]}));
+        if (this.distance - distance >= THRESHOLD_FILL || distance - this.distance >= THRESHOLD_DRINK) {
+          const ratio = (this.profile.data.empty - distance) / (this.profile.data.empty - this.profile.data.full);
+          this.fillLevel = round(this.profile.data.ml * ratio);
+          this.fillPercentage = clamp(round(100 * ratio), 0, 100);
+          const change = this.profile.data.ml * round(Math.abs(this.distance - distance) / (this.profile.data.full - this.profile.data.empty));
+          const timestamp = Date.now();
+          const day = new Date(timestamp).toISOString().split('T')[0];
+          if (day != this.day) {
+            this.day = day;
+            this.history = {sum: 0, refills: 0, data: []};
+          }
+          this.history.data.push({timestamp: timestamp, change: change, refill: distance < this.distance});
+          if (distance < this.distance) {
+            this.lastRefill = timestamp;
+            this.history.refills = this.history.refills + 1;
+          } else {
+            this.history.sum = this.history.sum + change;
+          }
+          this.distance = distance;
+          this.emitter.dispatchEvent(new CustomEvent("fill", {detail: [this.fillPercentage, this.fillLevel, this.lastRefill]}));
+          this.saveData();
+        }
       } else {
-        this.calibrationValues(distance);
+        this.calibrationValues.push(distance);
       }
     }
   }
@@ -81,9 +119,12 @@ class DataService {
     this.calibrationValues = [];
     if (this.calibrationStatus == FULL) {
       this.profile.data.full = value;
+      this.lastRefill = Date.now();
     } else if (this.calibrationStatus == EMPTY) {
       this.profile.data.empty = value;
     }
+    this.distance = value;
+    this.saveData();
   }
 
   async finishCalibration() {
@@ -94,6 +135,8 @@ class DataService {
   saveData() {
     localStorage.setItem("profiles", JSON.stringify(this.profiles));
     localStorage.setItem("selected-profile", this.profile ? this.profile.name : "");
+    localStorage.setItem("state", JSON.stringify({lastRefill: this.lastRefill, distance: this.distance, temperature: this.temperature}));
+    localStorage.setItem("history:" + this.day, JSON.stringify(this.history));
   }
 
   createProfile(name) {
@@ -108,14 +151,14 @@ class DataService {
     this.profiles = this.profiles.filter(x => x.name != name);
     if (this.profile && this.profile.name == name) {
       this.profile = null;
-      this.emitter.dispatchEvent(new CustomEvent("select-profile", {detail: "-"}));
+      this.emitter.dispatchEvent(new CustomEvent("select-profile", {detail: "no mug selected"}));
     }
     this.saveData();
   }
 
   selectProfile(name) {
     this.profile = this.profiles.find(x => x.name == name);
-    this.emitter.dispatchEvent(new CustomEvent("select-profile", {detail: this.profile ? this.profile.name : "-"}));
+    this.emitter.dispatchEvent(new CustomEvent("select-profile", {detail: this.profile ? this.profile.name : "no mug selected"}));
     this.saveData();
   }
 
@@ -142,6 +185,14 @@ function filterOutliers(array) {
   const upperBound = q3 + 1.5 * iqr;
 
   return array.filter(x => x >= lowerBound && x <= upperBound);
+}
+
+function round(value) {
+  return Math.round(value * 100) / 100;
+}
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
 }
 
 const instance = new DataService();
