@@ -10,7 +10,7 @@ const LastRefill = ({ value, size = 250 }) => {
       <div
         className="absolute inset-2 flex flex-col items-center justify-center rounded-full bg-white text-black shadow-inner"
       >
-        <div className="text-4xl font-extrabold">{value} min</div>
+        <div className="text-4xl font-extrabold">{value}</div>
         <div className="text-lg font-semibold uppercase tracking-wider">
           last refill
         </div>

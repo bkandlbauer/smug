@@ -12,7 +12,7 @@ function App() {
   const [fillML, setFillML] = useState(DataService.fillLevel);
   const [fillMax, setFillMax] = useState(DataService.profile ? DataService.profile.data.ml : 0);
   const [history, setHistory] = useState(DataService.getHistoryData());
-  const [last, setLast] = useState(0);
+  const [last, setLast] = useState(getTimeSince(DataService.lastRefill));
   const [temperature, setTemperature] = useState(0);
   const [connection, setConnection] = useState("disconnected");
   const [profile, setProfile] = useState(DataService.profile ? DataService.profile.name : "no mug selected");
@@ -26,11 +26,19 @@ function App() {
       setFillMax(event.detail[2]);
       setLast(event.detail[3]);
       setHistory(DataService.getHistoryData());
+      setLast(getTimeSince(DataService.lastRefill));
     });
     DataService.onSignal("temperature", (event) => setTemperature(event.detail));
     DataService.onSignal("connection", (event) => setConnection(event.detail ? "connected" : "disconnected"));
     DataService.onSignal("select-profile", (event) => setProfile(event.detail));
   }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLast(getTimeSince(DataService.lastRefill));
+    }, 10000);
+    return () => clearInterval(interval);
+  });
 
   return (
     <div className="mt-15">
@@ -58,6 +66,18 @@ function App() {
       </div>
     </div>
   )
+}
+
+function getTimeSince(timestamp) {
+  const diffMs = Date.now() - timestamp;
+  const diffMins = Math.floor(diffMs / 60000);
+
+  if (diffMins < 1) return '<1 min';
+  if (diffMins < 60) return `${diffMins} min${diffMins !== 1 ? 's' : ''}`;
+
+  const hours = Math.floor(diffMins / 60);
+  const mins = diffMins % 60;
+  return `${hours} hr${hours !== 1 ? 's' : ''}${mins > 0 ? ` ${mins} min${mins !== 1 ? 's' : ''}` : ''}`;
 }
 
 export default App
