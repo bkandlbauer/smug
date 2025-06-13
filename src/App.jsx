@@ -5,14 +5,15 @@ import LastRefill from './components/LastRefill.jsx';
 import Temperature from './components/Temperature.jsx';
 import ProfilesPopup from './components/ProfilesPopup.jsx';
 import DataService from './DataService.jsx';
+import HistoryChart from './components/HistoryChart.jsx';
 
 function App() {
   const [filled, setFilled] = useState(false);
-  const [fill, setFill] = useState(71);
-  const [last, setLast] = useState(12);
-  const [temperature, setTemperature] = useState(61);
+  const [fill, setFill] = useState(0);
+  const [last, setLast] = useState(0);
+  const [temperature, setTemperature] = useState(0);
   const [connection, setConnection] = useState("disconnected");
-  const [profile, setProfile] = useState(DataService.profile ? DataService.profile.name : "-");
+  const [profile, setProfile] = useState(DataService.profile ? DataService.profile.name : "no mug selected");
 
   const [showProfiles, setShowProfiles] = useState(false);
 
@@ -25,20 +26,26 @@ function App() {
 
   return (
     <div className="mt-15">
-      <div className="font-bold mt-4 text-left">[{connection}] {profile}</div>
+      <div className="font-bold mt-4 text-left"> [{connection}] {connection === 'connected' && ` - ${profile}`}</div>
       <h1 className="mt-1 text-7xl font-bold text-left mb-10">Smug.</h1>
+      <div className="flex flex-row gap-20">
+        <div>
       <div className='flex flex-row gap-5 mb-10'>
         <FillLevel value={fill}/>
         <LastRefill value={last}/>
       </div>
       <Temperature value={temperature}/>
+      </div>
       <ProfilesPopup isOpen={showProfiles} onClose={() => setShowProfiles(false)} />
+      <HistoryChart />
+      </div>
       <div className='flex flex-row gap-5 mb-10'>
-        <button onClick={() => DataService.connect()} className="cursor-pointer mt-30  px-15 py-3 bg-black text-white rounded flex items-start hover:bg-white hover:text-black hover:border-1 border-1 duration-100 ease-in-out">
-          Connect
+        <button onClick={() => DataService.connect()} className="mt-30 px-15 py-3 rounded-lg border border-black bg-gradient-to-bl from-gray-700 to-black text-white tracking-wide transform transition-transform duration-200 hover:scale-110">
+        Connect
         </button>
-        <button onClick={() => setShowProfiles(true)} className="cursor-pointer mt-30  px-15 py-3 bg-black text-white rounded flex items-start hover:bg-white hover:text-black hover:border-1 border-1 duration-100 ease-in-out">
-          Mugs
+
+        <button onClick={() => setShowProfiles(true)} className="ml-2 mt-30 px-15 py-3 rounded-lg border border-black bg-gradient-to-bl from-gray-700 to-black text-white tracking-wide transform transition-transform duration-200 hover:scale-110">
+          My Mugs
         </button>
       </div>
     </div>

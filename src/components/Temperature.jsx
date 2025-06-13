@@ -1,25 +1,22 @@
 import React from 'react';
 
 const Temperature = ({ value }) => {
-
-  const getColor = (val) => {
-    if (val > 90) return 'bg-red-700';
-    if (val > 50) return 'bg-orange-600';
-    return 'bg-blue-700';
+  const getGradient = (val) => {
+    if (val > 90) return 'from-red-600 to-red-800';
+    if (val > 50) return 'from-orange-500 to-orange-700';
+    return 'from-blue-600 to-blue-800';
   };
 
-  const bgColor = getColor(value);
+  const gradient = getGradient(value);
 
   return (
     <div
-      className={`flex items-center rounded-2xl justify-center ${bgColor} select-none shadow-xl`}
-      style={{ width: 500, height: 100 }}>
-
-
-      <div className='text-5xl font-bold text-white'>
+      className={`flex items-center justify-center rounded-2xl bg-gradient-to-br ${gradient} select-none shadow-xl`}
+      style={{ width: 500, height: 100 }}
+    >
+      <div className="text-5xl font-bold text-white">
         {value}° C
       </div>
-      
     </div>
   );
 };
