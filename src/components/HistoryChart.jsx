@@ -48,26 +48,29 @@ const HistoryChart = ({ data = sampleData, width = 600, height = 300 }) => {
 
         return (
           <g key={d.date}>
-            <rect
-              x={x}
-              y={y}
-              width={barWidth * 0.8}
-              height={barHeight}
-              fill="#3b82f6"
-              rx={2}
-              ry={2}
-            />
-    
-            <text
-              x={x + barWidth * 0.4}
-              y={y - 10}
-              fontSize="16"
-              fontWeight="500"
-              fill="#3b82f6"
-              textAnchor="middle"
-            >
-              {d.amount + " l"}
-            </text>
+            {barHeight > 0
+              && 
+              (<rect
+                x={x}
+                y={y}
+                width={barWidth * 0.8}
+                height={barHeight}
+                fill="#3b82f6"
+                rx={2}
+                ry={2}
+              />)
+              &&
+              (<text
+                x={x + barWidth * 0.4}
+                y={y - 10}
+                fontSize="16"
+                fontWeight="500"
+                fill="#3b82f6"
+                textAnchor="middle"
+              >
+                {d.amount + " l"}
+              </text>
+            )}
 
             <text
               x={x + barWidth * 0.4}

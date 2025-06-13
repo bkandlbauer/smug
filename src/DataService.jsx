@@ -98,7 +98,7 @@ class DataService {
             this.history.sum = this.history.sum + change;
           }
           this.distance = distance;
-          this.emitter.dispatchEvent(new CustomEvent("fill", {detail: [this.fillPercentage, this.fillLevel, this.lastRefill]}));
+          this.emitter.dispatchEvent(new CustomEvent("fill", {detail: [this.fillPercentage, this.fillLevel, this.profile ? this.profile.data.ml : 0, this.lastRefill]}));
           this.saveData();
         }
       } else {
@@ -164,6 +164,20 @@ class DataService {
 
   onSignal(signal, callback) {
     this.emitter.addEventListener(signal, callback);
+  }
+
+  getHistoryData() {
+    let data = [];
+    const date = new Date(Date.now());
+    
+    for (let i = 6; i >= 0; i--) {
+      let day = new Date();
+      day.setDate(date.getDate() - i);
+      const history = JSON.parse(localStorage.getItem("history:" + day));
+      data.push({date: day.toISOString().split('T')[0], amount: history ? history.sum : 0});
+    }
+
+    return data;
   }
 }
 

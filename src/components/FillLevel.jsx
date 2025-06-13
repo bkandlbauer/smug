@@ -1,18 +1,18 @@
 import React from 'react';
 
-const FillLevel = ({ value, size = 250 }) => {
+const FillLevel = ({ percentage, ml, mlMax, size = 250 }) => {
   const strokeWidth = 15;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (value / 100) * circumference;
+  const offset = circumference - (percentage / 100) * circumference;
 
   const getColor = () => {
-    if (value > 75) return '#15803d'; // green
-    if (value > 50) return '#ca8a04'; // yellow
+    if (percentage > 75) return '#15803d'; // green
+    if (percentage > 50) return '#ca8a04'; // yellow
     return '#b91c1c';                 // red
   };
 
-  const rotation = 90 - (value / 100) * 180;
+  const rotation = 90 - (percentage / 100) * 180;
   const transform = `rotate(${rotation} ${size / 2} ${size / 2})`;
 
   return (
@@ -49,9 +49,9 @@ const FillLevel = ({ value, size = 250 }) => {
 
 
       <div className="absolute inset-2 flex flex-col items-center justify-center rounded-full bg-white text-black shadow-inner text-center">
-        <div className="text-4xl font-extrabold mt-5">{value}%</div>
+        <div className="text-4xl font-extrabold mt-5">{percentage}%</div>
         <div className="text-lg font-semibold uppercase tracking-wider">filled</div>
-         <div className="text-sm font-semibold uppercase tracking-wider mt-1 text-gray-500">[200/250ml]</div>
+         <div className="text-sm font-semibold uppercase tracking-wider mt-1 text-gray-500">[{ml}/{mlMax} ml]</div>
       </div>
     </div>
   );
