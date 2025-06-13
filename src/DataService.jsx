@@ -89,40 +89,55 @@ class DataService {
         }
       }
       this.values.shift();
-      return valid;
+      if (valid) {
+        return avg;
+      }
+      return false;
     }
     return false;
   }
 
   handleFillValue(distance) {
-    if (this.profile) {
-      if (this.calibrationStatus == DONE) {
-        if (this.filterFillValue(this.values)) {
-          const ratio = (this.profile.data.empty - distance) / (this.profile.data.empty - this.profile.data.full);
-          this.fillLevel = Math.round(this.profile.data.ml * ratio);
-          this.fillPercentage = clamp(Math.round(100 * ratio), 0, 100);
-          const change = this.profile.data.ml * Math.round(Math.abs(this.distance - distance) / (this.profile.data.full - this.profile.data.empty));
-          const timestamp = Date.now();
-          const day = new Date(timestamp).toISOString().split('T')[0];
-          if (day != this.day) {
-            this.day = day;
-            this.history = {sum: 0, refills: 0, data: []};
-          }
-          this.history.data.push({timestamp: timestamp, change: change, refill: distance < this.distance});
-          if (distance < this.distance) {
-            this.lastRefill = timestamp;
-            this.history.refills = this.history.refills + 1;
-          } else {
-            this.history.sum = this.history.sum + change;
-          }
-          this.distance = distance;
-          this.emitter.dispatchEvent(new CustomEvent("fill", {detail: [this.fillPercentage, this.fillLevel, this.profile ? this.profile.data.ml : 0, this.lastRefill]}));
-          this.saveData();
-        }
-      } else {
-        this.calibrationValues.push(distance);
-      }
+    console.log(distance); 
+    if (!this.profile) {
+      return;
     }
+
+    if (this.calibrationStatus != DONE) {
+      this.calibrationValues.push(distance);
+      return;
+    }
+
+    const avgResult = this.filterFillValue(distance);
+    if (avgResult === false) {
+      return;
+    }
+
+    distance = avgResult;
+    if (Math.abs(this.distance - distance) < THRESHOLD_FILL) {
+      return;
+    }
+
+    const ratio = (this.profile.data.empty - distance) / (this.profile.data.empty - this.profile.data.full);
+    this.fillLevel = Math.round(this.profile.data.ml * ratio);
+    this.fillPercentage = clamp(Math.round(100 * ratio), 0, 100);
+    const change = this.profile.data.ml * Math.round(Math.abs(this.distance - distance) / (this.profile.data.full - this.profile.data.empty));
+    const timestamp = Date.now();
+    const day = new Date(timestamp).toISOString().split('T')[0];
+    if (day != this.day) {
+      this.day = day;
+      this.history = {sum: 0, refills: 0, data: []};
+    }
+    this.history.data.push({timestamp: timestamp, change: change, refill: distance < this.distance});
+    if (distance < this.distance) {
+      this.lastRefill = timestamp;
+      this.history.refills = this.history.refills + 1;
+    } else {
+      this.history.sum = this.history.sum + change;
+    }
+    this.distance = distance;
+    this.emitter.dispatchEvent(new CustomEvent("fill", {detail: [this.fillPercentage, this.fillLevel, this.profile ? this.profile.data.ml : 0, this.lastRefill]}));
+    this.saveData();
   }
 
   setSize(ml) {

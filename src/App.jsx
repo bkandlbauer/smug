@@ -62,7 +62,7 @@ function App() {
         Connect
         </button>
 
-        <button onClick={() => setShowProfiles(true)} className="ml-2 mt-30 px-15 py-3 rounded-lg border border-black bg-gradient-to-bl from-gray-700 to-black text-white tracking-wide transform transition-transform duration-200 hover:scale-110" disabled={connection == "disconnected"}>
+        <button onClick={() => setShowProfiles(true)} className="ml-2 mt-30 px-15 py-3 rounded-lg border border-black bg-gradient-to-bl from-gray-700 to-black text-white tracking-wide transform transition-transform duration-200 hover:scale-110 disabled:opacity-50" disabled={connection == "disconnected"}>
           My Mugs
         </button>
       </div>
