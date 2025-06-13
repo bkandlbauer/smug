@@ -4,7 +4,7 @@ const FillLevel = ({ percentage, ml, mlMax, size = 250 }) => {
   const strokeWidth = 15;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (percentage / 100) * circumference;
+  const offset = percentage >= 100 ? 0 : circumference - (percentage / 100) * circumference;
 
   const getColor = () => {
     if (percentage > 75) return '#15803d'; // green

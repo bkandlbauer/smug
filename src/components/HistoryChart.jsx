@@ -48,8 +48,7 @@ const HistoryChart = ({ data = sampleData, width = 600, height = 300 }) => {
 
         return (
           <g key={d.date}>
-            {barHeight > 0
-              && 
+            {barHeight > 0 && 
               (<rect
                 x={x}
                 y={y}
@@ -58,8 +57,10 @@ const HistoryChart = ({ data = sampleData, width = 600, height = 300 }) => {
                 fill="#3b82f6"
                 rx={2}
                 ry={2}
-              />)
-              &&
+              />
+            )}
+
+            {barHeight > 0 &&
               (<text
                 x={x + barWidth * 0.4}
                 y={y - 10}
