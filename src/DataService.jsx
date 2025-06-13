@@ -8,7 +8,8 @@ const FULL = 2;
 
 const CALIBRATION_TIME = 3000;
 const THRESHOLD_FILL = 5;
-const THRESHOLD_DRINK = 5;
+
+const MEASUREMENTS = 4;
 
 class DataService {
   constructor() {
@@ -21,6 +22,7 @@ class DataService {
       this.profiles = [];
       this.profile = null;
     }
+    this.values = [];
     this.fillLevel = 0;
     this.fillPercentage = 0;
     this.calibrationStatus = DONE;
@@ -32,9 +34,9 @@ class DataService {
       this.distance = state.distance;
       this.temperature = state.temperature;
       if (this.profile) {
-        const ratio = (this.profile.data.empty - this.distance) / (this.profile.data.empty - this.profile.data.full);
-        this.fillLevel = round(this.profile.data.ml * ratio);
-        this.fillPercentage = clamp(round(100 * ratio), 0, 100);
+        const ratio = clamp((this.profile.data.empty - this.distance) / (this.profile.data.empty - this.profile.data.full), 0, 1);
+        this.fillLevel = Math.round(this.profile.data.ml * ratio);
+        this.fillPercentage = Math.round(100 * ratio);
       }
     } else {
       this.lastRefill = Date.now();
@@ -76,14 +78,30 @@ class DataService {
     this.saveData();
   }
 
+  filterFillValue(distance) {
+    this.values.push(distance);
+    if (this.values.length == MEASUREMENTS) {
+      const avg = average(this.values);
+      let valid = true;
+      for (let i = 0; i < MEASUREMENTS && valid; i++) {
+        if (Math.abs(avg - this.values[i]) >= THRESHOLD_FILL) {
+          valid = false;
+        }
+      }
+      this.values.shift();
+      return valid;
+    }
+    return false;
+  }
+
   handleFillValue(distance) {
     if (this.profile) {
       if (this.calibrationStatus == DONE) {
-        if (this.distance - distance >= THRESHOLD_FILL || distance - this.distance >= THRESHOLD_DRINK) {
+        if (this.filterFillValue(this.values)) {
           const ratio = (this.profile.data.empty - distance) / (this.profile.data.empty - this.profile.data.full);
-          this.fillLevel = round(this.profile.data.ml * ratio);
-          this.fillPercentage = clamp(round(100 * ratio), 0, 100);
-          const change = this.profile.data.ml * round(Math.abs(this.distance - distance) / (this.profile.data.full - this.profile.data.empty));
+          this.fillLevel = Math.round(this.profile.data.ml * ratio);
+          this.fillPercentage = clamp(Math.round(100 * ratio), 0, 100);
+          const change = this.profile.data.ml * Math.round(Math.abs(this.distance - distance) / (this.profile.data.full - this.profile.data.empty));
           const timestamp = Date.now();
           const day = new Date(timestamp).toISOString().split('T')[0];
           if (day != this.day) {
@@ -201,8 +219,10 @@ function filterOutliers(array) {
   return array.filter(x => x >= lowerBound && x <= upperBound);
 }
 
-function round(value) {
-  return Math.round(value * 100) / 100;
+function average(array) {
+  if (array.length === 0) return 0;
+  const sum = array.reduce((acc, val) => acc + val, 0);
+  return sum / array.length;
 }
 
 function clamp(value, min, max) {
