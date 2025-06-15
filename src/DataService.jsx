@@ -15,7 +15,7 @@ class DataService {
   constructor() {
     this.beepsis = 0;
     this.fillSignal = false;
-    this.audio = new Audio('https://media.geeksforgeeks.org/wp-content/uploads/20190531135120/beep.mp3');
+    this.audio = new Audio('/beep.mp3');
     this.horn = new Audio('/horn.mp3');
     this.connected = false;
     this.profiles = JSON.parse(localStorage.getItem("profiles"));
